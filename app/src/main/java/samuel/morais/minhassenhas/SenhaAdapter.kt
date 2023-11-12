@@ -23,7 +23,7 @@ class SenhaAdapter(context: Context, resource: Int, objects: List<Password>) :
 
         val senha = getItem(position)
         descricaoTextView.text = senha?.descricao
-        tamanhoTextView.text = "(${senha?.tamanho})"
+        tamanhoTextView.text = "(${senha?.getTamanho()})"
         return convertView
     }
     }

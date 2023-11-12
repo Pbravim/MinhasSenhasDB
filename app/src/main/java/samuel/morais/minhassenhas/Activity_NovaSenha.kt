@@ -26,6 +26,9 @@ class Activity_NovaSenha : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_novasenha)
 
+        val dao = SenhaDAO(this)
+
+
         this.atualNumero = this.findViewById(R.id.tvTamanhoAtual)
         this.gerar = this.findViewById(R.id.btGerar)
         this.cancelar = this.findViewById(R.id.btCancelar)
@@ -35,7 +38,6 @@ class Activity_NovaSenha : AppCompatActivity() {
         this.descricao = this.findViewById(R.id.etDescricao)
         this.seekBar = this.findViewById(R.id.seekBar)
 
-        val novaSenha = Password()
 
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
@@ -51,20 +53,10 @@ class Activity_NovaSenha : AppCompatActivity() {
         this.gerar.setOnClickListener {
             val inputText = descricao.text.toString()
             if (inputText.isNotEmpty()) {
-                //Descricao
-                novaSenha.descricao = inputText
-                //Seekbar
-                novaSenha.tamanho = seekBar.progress
-                //CheckBox
-                novaSenha.maiusculo = cbMaiusculo.isChecked
-                novaSenha.numero = cbNumero.isChecked
-                novaSenha.especial = cbEspecial.isChecked
+                val novaSenha = Password(inputText)
                 //GerarSenha
-                novaSenha.gerarSenha(novaSenha.tamanho)
-
-                val intent = Intent()
-                intent.putExtra("novaSenha", novaSenha)
-                setResult(Activity.RESULT_OK, intent)
+                novaSenha.gerarSenha(seekBar.progress, cbMaiusculo.isChecked, cbNumero.isChecked, cbEspecial.isChecked)
+                dao.insert(novaSenha)
                 finish()
             }
         }

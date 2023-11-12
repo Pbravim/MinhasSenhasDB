@@ -15,6 +15,7 @@ import com.google.android.material.textfield.TextInputEditText
 
 
 class EditarSenhaActivity : AppCompatActivity() {
+    private lateinit var dao: SenhaDAO
     private lateinit var alterarSenha: Button
     private lateinit var apagarSenha: Button
     private lateinit var cancelar: Button
@@ -27,6 +28,8 @@ class EditarSenhaActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_editarsenha)
+        this.dao = SenhaDAO(this)
+
 
         descricao = findViewById(R.id.etDescricao)
         alterarSenha = findViewById(R.id.btAlterar)
@@ -38,64 +41,55 @@ class EditarSenhaActivity : AppCompatActivity() {
         seekBar = findViewById(R.id.seekBar)
         atualNumero = findViewById(R.id.tvTamanhoAtual)
 
-        val senha = intent.getParcelableExtra<Password>("senha")
-        //Deixar a tela de acordo com as configurações da senhas
-        if (senha != null) {
-            val descricaoEditable = Editable.Factory.getInstance().newEditable(senha.descricao)
-            descricao.text = descricaoEditable
-            seekBar.progress = senha.tamanho
-            if (senha.maiusculo)
-                maiscula.isChecked = true
-            if (senha.numero)
-                numeros.isChecked = true
-            if (senha.especial)
-                especial.isChecked = true
+        val senhaId = intent.getIntExtra("senhaId", -1)
 
+        if (senhaId != -1) {
+            val senha = dao.find(senhaId)
 
+            if (senha != null) {
+                descricao.text = Editable.Factory.getInstance().newEditable(senha.descricao)
+                seekBar.progress = senha.getTamanho()
+                maiscula.isChecked = senha.verifyMaiusculo()
+                numeros.isChecked = senha.verifyNumero()
+                especial.isChecked = senha.verifyEspecial()
 
-            seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(
-                    seekBar: SeekBar?,
-                    progress: Int,
-                    fromUser: Boolean
-                ) {
-                    atualNumero.text = progress.toString()
+                seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                    override fun onProgressChanged(
+                        seekBar: SeekBar?,
+                        progress: Int,
+                        fromUser: Boolean
+                    ) {
+                        atualNumero.text = progress.toString()
+                    }
+
+                    override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                    }
+
+                    override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                    }
+                })
+
+                alterarSenha.setOnClickListener() {
+                    alteraSenha(senha)
                 }
-
-                override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                apagarSenha.setOnClickListener() {
+                    apagarSenha(senha)
                 }
-
-                override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                cancelar.setOnClickListener() {
+                    cancelar()
                 }
-            })
-
-            alterarSenha.setOnClickListener() {
-                alteraSenha(senha)
             }
-            apagarSenha.setOnClickListener() {
-                apagarSenha(senha)
-            }
-            cancelar.setOnClickListener() {
-                cancelar()
-            }
-        } else {
-            //da erro
         }
+
     }
 
     fun alteraSenha(senha: Password){
-
         val senhaAlterada = editarSenha(senha)
-
-        val intent = Intent()
-        intent.putExtra("senhaAlterada", senhaAlterada)
-        setResult(Activity.RESULT_OK, intent)
+        dao.update(senhaAlterada)
         finish()
     }
     fun apagarSenha(senha: Password){
-        val intent = Intent()
-        intent.putExtra("senhaApagada", senha)
-        setResult(Activity.RESULT_OK, intent)
+        dao.delete(senha.id)
         finish()
     }
     fun cancelar(){
@@ -103,12 +97,8 @@ class EditarSenhaActivity : AppCompatActivity() {
     }
 
     fun editarSenha(novaSenha: Password): Password {
-        novaSenha.maiusculo = maiscula.isChecked
-        novaSenha.numero = numeros.isChecked
-        novaSenha.especial = especial.isChecked
-        novaSenha.gerarSenha(seekBar.progress)
+        novaSenha.gerarSenha(seekBar.progress, maiscula.isChecked, numeros.isChecked, especial.isChecked)
         novaSenha.descricao = descricao.text.toString()
-        novaSenha.tamanho = seekBar.progress
         return novaSenha
     }
 
